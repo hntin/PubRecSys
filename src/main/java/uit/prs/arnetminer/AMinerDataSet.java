@@ -1,15 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package uit.prs.arnetminer;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
+import uit.prs.model.Author;
 import uit.prs.utility.common.TextFileUtility;
 
 /**
@@ -17,6 +13,64 @@ import uit.prs.utility.common.TextFileUtility;
  * @author Huynh Ngoc Tin
  */
 public class AMinerDataSet {
+
+    ArrayList authorList = new ArrayList<>();
+
+    public static void readFile_AMinerAuthor(String fileName) {
+        StringBuffer strBuffer = new StringBuffer();
+        try {
+            FileInputStream fis = new FileInputStream(fileName);
+            Reader reader = new InputStreamReader(fis, "UTF8");
+            BufferedReader bufferReader = new BufferedReader(reader);
+            Author author = null;
+            String line = bufferReader.readLine();
+            while (line != null && !line.equals("")) {
+                // A new author
+                if (line.contains("#index ")) {
+                    author = new Author();
+                    author.setAuthorId(line.split(" ")[1]);
+                }
+                if (line.contains("#n ")) {
+                    author.setAuthorName("");
+                }
+                if (line.contains("#a ")) {
+
+                }
+                if (line.contains("#pc ")) {
+
+                }
+                if (line.contains("#cn ")) {
+
+                }
+                if (line.contains("#hi ")) {
+
+                }
+                if (line.contains("#pi ")) {
+
+                }
+                if (line.contains("#upi ")) {
+
+                }
+                if (line.contains("#t ")) {
+
+                }
+
+                line = bufferReader.readLine();
+            }
+
+            bufferReader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void readFile_AMinerPaper(String fileName) {
+
+    }
+
+    public static void readFile_AMinerCoAuthor(String fileName) {
+
+    }
 
     /**
      * portAMinerDataToPRSData PRS Data files: Training & Testing Data Files;
@@ -32,7 +86,7 @@ public class AMinerDataSet {
 
     public static void createFile_Author_Cite_Paper() {
         // AuthorID|||PaperID
-        
+
     }
 
     public static void createFile_Author_Paper() {
