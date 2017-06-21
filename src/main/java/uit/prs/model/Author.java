@@ -55,6 +55,5 @@ public class Author implements Serializable {
         this.paperList = paperList;
     }
 //</editor-fold>
-    
-    
+        
 }
