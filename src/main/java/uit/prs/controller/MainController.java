@@ -5,10 +5,14 @@
  */
 package uit.prs.controller;
 
+import uit.prs.arnetminer.AMinerDataSet;
+
 /**
  *
  * @author Huynh Ngoc Tin
  */
 public class MainController {
-    
+    public static void main(String args[]) {
+        AMinerDataSet.portAMinerDataToPRSData("D:\\AMiner-Author.txt.001", "filePaper_AMiner", "fileCoAuthor_AMiner", "D:\\PRS-Author.txt");
+    }
 }
