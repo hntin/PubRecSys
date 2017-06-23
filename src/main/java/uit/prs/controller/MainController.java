@@ -13,7 +13,9 @@ import uit.prs.arnetminer.AMinerDataSet;
  */
 public class MainController {
     public static void main(String args[]) {
+        AMinerDataSet aMiner = new AMinerDataSet();
         //AMinerDataSet.portAMinerDataToPRSData("D:\\AMiner-Author.txt.001", "filePaper_AMiner", "fileCoAuthor_AMiner", "D:\\PRS-Author.txt");
-        AMinerDataSet.readFile_AMinerAuthor("D:\\AMiner-Author.txt.001");
+        aMiner.readFile_AMinerAuthor("D:\\AMiner-Author.txt.001");
+        aMiner.readFile_AMinerPaper("D:\\AMiner-Paper-Test.txt");
     }
 }

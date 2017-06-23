@@ -7,7 +7,7 @@ import java.util.List;
  * @author Huynh Ngoc Tin
  */
 public class Paper {
-    private String id;
+    private int id;
     private String title;
     private String abs;
     private int year;
@@ -16,11 +16,11 @@ public class Paper {
     private List refIDList;
 
     //<editor-fold defaultstate="collapsed" desc="Getter & Setter">
-    public String getId() {
+    public int getId() {
         return id;
     }
     
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
     
@@ -71,7 +71,5 @@ public class Paper {
     public void setRefIDList(List refIDList) {
         this.refIDList = refIDList;
     }
-//</editor-fold>
-
-    
+    //</editor-fold>   
 }

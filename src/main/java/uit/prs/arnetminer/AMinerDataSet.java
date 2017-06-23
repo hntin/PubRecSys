@@ -5,7 +5,9 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import uit.prs.model.Author;
+import uit.prs.model.Paper;
 import uit.prs.utility.common.TextFileUtility;
 
 /**
@@ -14,46 +16,169 @@ import uit.prs.utility.common.TextFileUtility;
  */
 public class AMinerDataSet {
 
-    ArrayList authorList = new ArrayList<>();
+    public static HashMap<Integer, Author> authors = new HashMap<>();
+    public static HashMap<Integer, Paper> papers = new HashMap<>();
 
-    public static void readFile_AMinerAuthor(String fileName) {
+    /**
+     * Reading file of Authors
+     *
+     * @param fileName
+     */
+    public void readFile_AMinerAuthor(String fileName) {
         StringBuffer strBuffer = new StringBuffer();
         try {
             FileInputStream fis = new FileInputStream(fileName);
             Reader reader = new InputStreamReader(fis, "UTF8");
             BufferedReader bufferReader = new BufferedReader(reader);
             Author author = null;
+            String arrTemp[] = null;
             String line = bufferReader.readLine();
-            while (line != null && !line.equals("")) {
+            while (line != null) {
                 // A new author
                 if (line.contains("#index ")) {
                     author = new Author();
-                    author.setAuthorId(line.split(" ")[1]);
+                    author.setAuthorId(Integer.parseInt(line.split(" ")[1]));
                 }
                 if (line.contains("#n ")) {
-                    author.setAuthorName("");
+                    author.setAuthorName(line.substring(3));
                 }
                 if (line.contains("#a ")) {
-
+                    author.setAffiliation(line.substring(3));
                 }
                 if (line.contains("#pc ")) {
-
+                    arrTemp = line.split(" ");
+                    if (arrTemp != null && arrTemp.length == 2) {
+                        author.setPubCount(Integer.parseInt(line.split(" ")[1]));
+                    }
                 }
                 if (line.contains("#cn ")) {
-
+                    arrTemp = line.split(" ");
+                    if (arrTemp != null && arrTemp.length == 2) {
+                        author.setCiteCount(Integer.parseInt(line.split(" ")[1]));
+                    }
                 }
                 if (line.contains("#hi ")) {
-
+                    arrTemp = line.split(" ");
+                    if (arrTemp != null && arrTemp.length == 2) {
+                        author.sethIndex(Float.parseFloat(line.split(" ")[1]));
+                    }
                 }
                 if (line.contains("#pi ")) {
-
-                }
-                if (line.contains("#upi ")) {
-
+                    arrTemp = line.split(" ");
+                    if (arrTemp != null && arrTemp.length == 2) {
+                        author.setpIndex(Float.parseFloat(line.split(" ")[1]));
+                    }
                 }
                 if (line.contains("#t ")) {
-
+                    arrTemp = line.substring(3).split(";");
+                    ArrayList keywords = new ArrayList();
+                    for (int i = 0; i < arrTemp.length; i++) {
+                        keywords.add(arrTemp[i]);
+                    }
+                    author.setInterestKeywords(keywords);
+                    authors.put(author.getAuthorId(), author);
                 }
+
+                line = bufferReader.readLine();
+            }
+
+            System.out.println("DONE");
+
+            bufferReader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Reading file of Papers
+     *
+     * @param fileName
+     */
+    public void readFile_AMinerPaper(String fileName) {
+        StringBuffer strBuffer = new StringBuffer();
+        try {
+            FileInputStream fis = new FileInputStream(fileName);
+            Reader reader = new InputStreamReader(fis, "UTF8");
+            BufferedReader bufferReader = new BufferedReader(reader);
+            Paper paper = null;
+            String arrTemp1[] = null;
+            String arrTemp2[] = null;
+            String line = bufferReader.readLine();
+            while (line != null) {
+                // A new paper
+                if (line.contains("#index ")) {
+                    paper = new Paper();
+                    arrTemp1 = line.split(" ");
+                    if (arrTemp1 != null && arrTemp1.length == 2) {
+                        paper.setId(Integer.parseInt(arrTemp1[1]));
+                    }
+                    // Add paper to the collection of papers
+                    papers.put(paper.getId(), paper);
+                }
+
+                if (line.contains("#* ")) {
+                    paper.setTitle(line.substring(3));
+                }
+
+                if (line.contains("#@ ")) {
+                    // list of authors
+                    ArrayList authorsOfPaper = new ArrayList();
+                    arrTemp1 = line.substring(3).split(";");
+
+                    // list fo associated aff
+                    line = bufferReader.readLine();
+                    if (line.contains("#o ")) {
+                        arrTemp2 = line.substring(3).split(";");
+                    }
+
+                    for (int i = 0; i < arrTemp1.length; i++) {
+                        String authorName = arrTemp1[i];
+                        int authorID = this.getAuthorID(authorName, arrTemp2[i]);
+                        Author author = authors.get(authorID);
+                       // Adding authors of a paper
+                        if (author != null) {
+                            authorsOfPaper.add(author);
+                        } else {
+                            author = new Author();
+                            author.setAuthorId(-1);
+                            author.setAuthorName(authorName);
+                            authorsOfPaper.add(author);
+                            // Adding a new author to the collection of authors
+                            authors.put(author.getAuthorId(), author);
+                        }
+                        
+                        // Updating papers of an author
+                        if (author.getPaperList() != null) {
+                            author.getPaperList().add(paper);
+                        } else {
+                            ArrayList pList = new ArrayList();
+                            pList.add(paper);
+                            author.setPaperList(pList);
+                        }
+                    }
+                    
+                    // Updating authors of a paper
+                    paper.setAuthorList(authorsOfPaper);
+                }
+
+                if (line.contains("#t ")) {
+                    arrTemp1 = line.split(" ");
+                    if (arrTemp1 != null && arrTemp1.length == 2) {
+                        paper.setYear(Integer.parseInt(arrTemp1[1]));
+                    }
+                }
+
+                if (line.contains("#c ")) {
+                    paper.setVenue(line.substring(3));
+                }
+
+                if (line.contains("#! ")) {
+                    paper.setAbs(line.substring(3));
+                }
+                
+                //#% ---- the id of references of this paper (there are multiple lines, with each indicating a reference)
+                if (line.contains("#% ")) {}
 
                 line = bufferReader.readLine();
             }
@@ -62,14 +187,29 @@ public class AMinerDataSet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static void readFile_AMinerPaper(String fileName) {
-
+        System.out.println("DONE");
     }
 
     public static void readFile_AMinerCoAuthor(String fileName) {
+    }
 
+    public int getAuthorID(String inAuthorName, String inAffName) {
+        int authorID = -1;
+        if (inAffName.equalsIgnoreCase("-")) {
+            inAffName = "";
+        }
+
+        for (Integer id : authors.keySet()) {
+            Author author = authors.get(id);
+            String authorName = author.getAuthorName();
+            String affName = author.getAffiliation();
+            if (authorName.equalsIgnoreCase(inAuthorName) && affName.contains(inAffName)) {
+                authorID = id;
+                break;
+            }
+        }
+
+        return authorID;
     }
 
     /**

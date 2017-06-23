@@ -8,18 +8,23 @@ import java.util.List;
  * @author Huynh Ngoc Tin
  */
 public class Author implements Serializable {
-    private String authorId;
+    private int authorId;
     private String authorName;
     private String authorType;
     private String affiliation;
+    private int pubCount;
+    private int citeCount;
+    private float hIndex;
+    private float pIndex;
+    private List<String> interestKeywords;
     private List<Paper> paperList;
 
    //<editor-fold defaultstate="collapsed" desc="Getter & Setter">
-    public String getAuthorId() {
+    public int getAuthorId() {
         return authorId;
     }
     
-    public void setAuthorId(String authorId) {
+    public void setAuthorId(int authorId) {
         this.authorId = authorId;
     }
     
@@ -54,6 +59,46 @@ public class Author implements Serializable {
     public void setPaperList(List<Paper> paperList) {
         this.paperList = paperList;
     }
-//</editor-fold>
+    
+    public int getPubCount() {
+        return pubCount;
+    }
+
+    public void setPubCount(int pubCount) {
+        this.pubCount = pubCount;
+    }
+
+    public int getCiteCount() {
+        return citeCount;
+    }
+
+    public void setCiteCount(int citeCount) {
+        this.citeCount = citeCount;
+    }
+
+    public float gethIndex() {
+        return hIndex;
+    }
+
+    public void sethIndex(float hIndex) {
+        this.hIndex = hIndex;
+    }
+
+    public float getpIndex() {
+        return pIndex;
+    }
+
+    public void setpIndex(float pIndex) {
+        this.pIndex = pIndex;
+    }
+
+    public List<String> getInterestKeywords() {
+        return interestKeywords;
+    }
+
+    public void setInterestKeywords(List<String> interestKeywords) {
+        this.interestKeywords = interestKeywords;
+    }
         
+    //</editor-fold>
 }
