@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import uit.prs.model.Author;
 import uit.prs.model.Paper;
 import uit.prs.utility.common.TextFileUtility;
@@ -101,84 +102,104 @@ public class AMinerDataSet {
             FileInputStream fis = new FileInputStream(fileName);
             Reader reader = new InputStreamReader(fis, "UTF8");
             BufferedReader bufferReader = new BufferedReader(reader);
-            Paper paper = null;
             String arrTemp1[] = null;
             String arrTemp2[] = null;
             String line = bufferReader.readLine();
             while (line != null) {
-                // A new paper
+                // Start a new paper
                 if (line.contains("#index ")) {
-                    paper = new Paper();
+                    Paper paper = null;
                     arrTemp1 = line.split(" ");
                     if (arrTemp1 != null && arrTemp1.length == 2) {
-                        paper.setId(Integer.parseInt(arrTemp1[1]));
+                        int paperID = Integer.parseInt(arrTemp1[1]);
+                        paper = papers.get(paperID);
+                        if (paper == null) {
+                            paper = new Paper();
+                            paper.setId(Integer.parseInt(arrTemp1[1]));
+                            // Adding the current paper to the collection of papers
+                            papers.put(paper.getId(), paper);
+                        }
                     }
-                    // Add paper to the collection of papers
-                    papers.put(paper.getId(), paper);
-                }
 
-                if (line.contains("#* ")) {
-                    paper.setTitle(line.substring(3));
-                }
-
-                if (line.contains("#@ ")) {
-                    // list of authors
-                    ArrayList authorsOfPaper = new ArrayList();
-                    arrTemp1 = line.substring(3).split(";");
-
-                    // list fo associated aff
                     line = bufferReader.readLine();
-                    if (line.contains("#o ")) {
-                        arrTemp2 = line.substring(3).split(";");
-                    }
+                    while (line != null && !line.equalsIgnoreCase("")) {
+                        //<editor-fold defaultstate="collapsed" desc="Adding authors for current paper">
+                        if (line.contains("#@ ")) {
+                            // list of authors
+                            ArrayList authorsOfPaper = new ArrayList();
+                            arrTemp1 = line.substring(3).split(";");
 
-                    for (int i = 0; i < arrTemp1.length; i++) {
-                        String authorName = arrTemp1[i];
-                        int authorID = this.getAuthorID(authorName, arrTemp2[i]);
-                        Author author = authors.get(authorID);
-                       // Adding authors of a paper
-                        if (author != null) {
-                            authorsOfPaper.add(author);
-                        } else {
-                            author = new Author();
-                            author.setAuthorId(-1);
-                            author.setAuthorName(authorName);
-                            authorsOfPaper.add(author);
-                            // Adding a new author to the collection of authors
-                            authors.put(author.getAuthorId(), author);
+                            // list fo associated aff
+                            line = bufferReader.readLine();
+                            if (line.contains("#o ")) {
+                                arrTemp2 = line.substring(3).split(";");
+                            }
+
+                            for (int i = 0; i < arrTemp1.length; i++) {
+                                String authorName = arrTemp1[i];
+                                int authorID = this.getAuthorID(authorName, arrTemp2[i]);
+                                Author author = authors.get(authorID);
+                                // Adding authors of a paper
+                                if (author != null) {
+                                    authorsOfPaper.add(author);
+                                } else {
+                                    author = new Author();
+                                    author.setAuthorId(-1);
+                                    author.setAuthorName(authorName);
+                                    authorsOfPaper.add(author);
+                                    // Adding a new author to the collection of authors
+                                    authors.put(author.getAuthorId(), author);
+                                }
+
+                                // Updating papers of an author
+                                if (author.getPaperList() != null) {
+                                    author.getPaperList().add(paper);
+                                } else {
+                                    ArrayList pList = new ArrayList();
+                                    pList.add(paper);
+                                    author.setPaperList(pList);
+                                }
+                            }
+
+                            // Updating authors of a paper
+                            paper.setAuthorList(authorsOfPaper);
                         }
-                        
-                        // Updating papers of an author
-                        if (author.getPaperList() != null) {
-                            author.getPaperList().add(paper);
-                        } else {
-                            ArrayList pList = new ArrayList();
-                            pList.add(paper);
-                            author.setPaperList(pList);
+                        //</editor-fold>
+                        //<editor-fold defaultstate="collapsed" desc="Updating other information for current paper">
+                        if (line.contains("#* ")) {
+                            paper.setTitle(line.substring(3));
                         }
+
+                        if (line.contains("#t ")) {
+                            arrTemp1 = line.split(" ");
+                            if (arrTemp1 != null && arrTemp1.length == 2) {
+                                paper.setYear(Integer.parseInt(arrTemp1[1]));
+                            }
+                        }
+
+                        if (line.contains("#c ")) {
+                            paper.setVenue(line.substring(3));
+                        }
+
+                        if (line.contains("#! ")) {
+                            paper.setAbs(line.substring(3));
+                        }
+                        //</editor-fold>
+
+                        //<editor-fold defaultstate="collapsed" desc="Adding references for current paper">
+                        if (line.contains("#% ")) {
+                            int refID = Integer.parseInt(line.split(" ")[1]);
+                            Paper refPaper = papers.get(refID);
+                            if (refPaper == null) { // not exist
+                                refPaper = new Paper();
+                                refPaper.setId(refID);
+                            }
+                            paper.getRefPaperList().add(refPaper);
+                        }
+                        //</editor-fold>
+                        line = bufferReader.readLine();
                     }
-                    
-                    // Updating authors of a paper
-                    paper.setAuthorList(authorsOfPaper);
                 }
-
-                if (line.contains("#t ")) {
-                    arrTemp1 = line.split(" ");
-                    if (arrTemp1 != null && arrTemp1.length == 2) {
-                        paper.setYear(Integer.parseInt(arrTemp1[1]));
-                    }
-                }
-
-                if (line.contains("#c ")) {
-                    paper.setVenue(line.substring(3));
-                }
-
-                if (line.contains("#! ")) {
-                    paper.setAbs(line.substring(3));
-                }
-                
-                //#% ---- the id of references of this paper (there are multiple lines, with each indicating a reference)
-                if (line.contains("#% ")) {}
 
                 line = bufferReader.readLine();
             }
