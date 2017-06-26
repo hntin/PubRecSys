@@ -19,6 +19,7 @@ public class AMinerDataSet {
 
     public static HashMap<Integer, Author> authors = new HashMap<>();
     public static HashMap<Integer, Paper> papers = new HashMap<>();
+    public static HashMap<Integer, HashMap<Integer, Integer>> coAuthors = new HashMap<>();
 
     /**
      * Reading file of Authors
@@ -104,8 +105,11 @@ public class AMinerDataSet {
             BufferedReader bufferReader = new BufferedReader(reader);
             String arrTemp1[] = null;
             String arrTemp2[] = null;
+            int count = 0;
             String line = bufferReader.readLine();
+            count++;
             while (line != null) {
+                System.out.println("Doing line" + count);
                 // Start a new paper
                 if (line.contains("#index ")) {
                     Paper paper = null;
@@ -122,6 +126,7 @@ public class AMinerDataSet {
                     }
 
                     line = bufferReader.readLine();
+                    count++;
                     while (line != null && !line.equalsIgnoreCase("")) {
                         //<editor-fold defaultstate="collapsed" desc="Adding authors for current paper">
                         if (line.contains("#@ ")) {
@@ -131,6 +136,7 @@ public class AMinerDataSet {
 
                             // list fo associated aff
                             line = bufferReader.readLine();
+                            count++;
                             if (line.contains("#o ")) {
                                 arrTemp2 = line.substring(3).split(";");
                             }
@@ -194,14 +200,22 @@ public class AMinerDataSet {
                                 refPaper = new Paper();
                                 refPaper.setId(refID);
                             }
-                            paper.getRefPaperList().add(refPaper);
+                            if (paper.getRefPaperList() != null) {
+                                paper.getRefPaperList().add(refPaper);
+                            } else {
+                                List<Paper> refPaperList = new ArrayList<Paper>();
+                                refPaperList.add(refPaper);
+                                paper.setRefPaperList(refPaperList);
+                            }
                         }
                         //</editor-fold>
                         line = bufferReader.readLine();
+                        count++;
                     }
                 }
 
                 line = bufferReader.readLine();
+                count++;
             }
 
             bufferReader.close();
@@ -211,7 +225,43 @@ public class AMinerDataSet {
         System.out.println("DONE");
     }
 
+    /**
+     * Reading file of coAuthors
+     *
+     * @param fileName
+     */
     public static void readFile_AMinerCoAuthor(String fileName) {
+        StringBuffer strBuffer = new StringBuffer();
+        try {
+            FileInputStream fis = new FileInputStream(fileName);
+            Reader reader = new InputStreamReader(fis, "UTF8");
+            BufferedReader bufferReader = new BufferedReader(reader);
+            String arrTemp[] = null;
+            String line = bufferReader.readLine();
+            while (line != null) {
+                arrTemp = line.split("\t");
+                if (arrTemp != null && (arrTemp.length == 3)) {
+                    int author1 = Integer.parseInt(arrTemp[0].substring(arrTemp[0].indexOf("#") + 1));
+                    int author2 = Integer.parseInt(arrTemp[1]);
+                    int numOfCollocation = Integer.parseInt(arrTemp[2]);
+                    HashMap<Integer, Integer> coAuthorHM = coAuthors.get(author1);
+                    if (coAuthors.get(author1) == null) {
+                        coAuthorHM = new HashMap<>();
+                        coAuthorHM.put(author2, numOfCollocation);
+                    } else {
+                        if (coAuthorHM.get(author2) == null) {
+                            coAuthorHM.put(author2, numOfCollocation);
+                        }
+                    }
+                    coAuthors.put(author1, coAuthorHM);
+                }
+
+                line = bufferReader.readLine();
+            }
+            System.out.println("DONE");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     public int getAuthorID(String inAuthorName, String inAffName) {
@@ -234,59 +284,124 @@ public class AMinerDataSet {
     }
 
     /**
-     * portAMinerDataToPRSData PRS Data files: Training & Testing Data Files;
-     * Refer to https://github.com/hntin/PRS-Framework.git
-     *
-     * @param fileAuthor
-     * @param filePaper
-     * @param fileCoAuthor
+     * Paper.csv 
+     * Paper ID|||Paper title|||Paper's abstract|||Published year
+     * @param file_Paper_PRS
      */
-    public static void portAMinerDataToPRSData(String fileAuthor_AMiner, String filePaper_AMiner, String fileCoAuthor_AMiner, String fileAuthor_PRS) {
-        createFile_InputAuthor(fileAuthor_AMiner, fileAuthor_PRS);
-    }
-
-    public static void createFile_Author_Cite_Paper() {
-        // AuthorID|||PaperID
-
-    }
-
-    public static void createFile_Author_Paper() {
-
-    }
-
-    public static void createFile_Paper_Cite_Paper() {
-
-    }
-
-    public static void createFile_Paper() {
-
+    public static void createFile_Paper(String file_Paper_PRS) {
+        StringBuilder str = new StringBuilder();
+        for (int id : papers.keySet()) {
+            Paper p = papers.get(id);
+            if (p != null) {
+                str.append(p.getId() + "|||");
+                str.append(p.getTitle() + "|||");
+                str.append(p.getAbs() + "|||");
+                str.append(p.getYear() + "\n");
+            }
+        }
+        TextFileUtility.writeTextFile(file_Paper_PRS, str.toString());
     }
 
     /**
-     *
-     * @param fileAuthor_AMiner
-     * @param fileAuthor_PRS
+     * Author_Paper.csv 
+     * Author ID|||Paper ID written by this author
+     * @param file_AuthorPaper_PRS
      */
-    public static void createFile_InputAuthor(String fileAuthor_AMiner, String fileAuthor_PRS) {
-        StringBuffer strBuffer = new StringBuffer();
-        try {
-            FileInputStream fis = new FileInputStream(fileAuthor_AMiner);
-            Reader reader = new InputStreamReader(fis, "UTF8");
-            BufferedReader bufferReader = new BufferedReader(reader);
-            String line = null;
-            while ((line = bufferReader.readLine()) != null) {
-                if (line.contains("#index ")) {
-                    String[] strArr = line.split(" ");
-                    strBuffer.append(strArr[1]);
-                    line = bufferReader.readLine();
-                    if (line != null && line.contains("#n ")) {
-                        String authorName = line.substring(3);
-                        strBuffer.append("|||" + authorName + "\n");
+    public static void createFile_Author_Paper(String file_AuthorPaper_PRS) {
+        StringBuilder str = new StringBuilder();
+        for (int id : authors.keySet()) {
+            Author author = authors.get(id);
+            if (author != null) {
+                List<Paper> paperList = author.getPaperList();
+                if (paperList != null && paperList.size() > 0) {
+                    for (Paper p : paperList) {
+                        str.append(id + "|||" + p.getId() + "\n");
                     }
                 }
             }
-            bufferReader.close();
-            TextFileUtility.writeTextFile(fileAuthor_PRS, strBuffer.toString());
+        }
+        TextFileUtility.writeTextFile(file_AuthorPaper_PRS, str.toString());
+    }
+
+    /**
+     * Paper_Cite_Paper.csv Paper ID|||Paper ID cited by this paper
+     *
+     * @param file_PaperCitePaper_PRS
+     */
+    public static void createFile_Paper_Cite_Paper(String file_PaperCitePaper_PRS) {
+        StringBuilder str = new StringBuilder();
+        for (int id : papers.keySet()) {
+            Paper paper = papers.get(id);
+            if (paper != null) {
+                List<Paper> refList = paper.getRefPaperList();
+                if (refList != null && refList.size() > 0) {
+                    for (Paper p : refList) {
+                        str.append(id + "|||" + p.getId() + "\n");
+                    }
+                }
+            }
+        }
+        TextFileUtility.writeTextFile(file_PaperCitePaper_PRS, str.toString());
+    }
+
+    /**
+     * Author_Cite_Paper.csv Author ID|||Paper ID cited by this author|||Year
+     * when the citation happens
+     *
+     * @param file_AuthorCitePaper_PRS
+     */
+    public static void createFile_Author_Cite_Paper(String file_AuthorCitePaper_PRS) {
+        StringBuilder str = new StringBuilder();
+        for (int idAuthor : authors.keySet()) {
+            Author author = authors.get(idAuthor);
+            if (author != null) {
+                List<Paper> paperList = author.getPaperList();
+                if (paperList != null && paperList.size() > 0) {
+                    for (Paper p : paperList) {
+                        if (p != null) {
+                            List<Paper> refList = p.getRefPaperList();
+                            if (refList != null) {
+                                for (Paper pRef : refList) {
+                                    if (pRef != null) {
+                                        str.append(idAuthor + "|||" + pRef.getId() + "|||" + p.getYear() + "\n");
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+        TextFileUtility.writeTextFile(file_AuthorCitePaper_PRS, str.toString());
+    }
+
+    /**
+     * Target_Researcher.csv Author ID|||Author name
+     *
+     * @param file_Author_PRS
+     */
+    public static void createFile_Author(String file_Author_PRS) {
+        StringBuilder str = new StringBuilder();
+        for (int id : authors.keySet()) {
+            Author author = authors.get(id);
+            if (author != null) {
+                str.append(id + "|||" + author.getAuthorName() + "\n");
+            }
+        }
+        TextFileUtility.writeTextFile(file_Author_PRS, str.toString());
+    }
+
+    /**
+     * Ground_Truth.csv
+     * Author ID|||Paper ID of relevant paper|||Weight of relevancy
+     * @param file_GroundTruth_PRS 
+     */
+    public static void createFile_GroundTruth(String file_GroundTruth_PRS) {
+        StringBuilder str = new StringBuilder();
+        try {
+
+            TextFileUtility.writeTextFile(file_GroundTruth_PRS, str.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }

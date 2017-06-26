@@ -16,6 +16,10 @@ public class MainController {
         AMinerDataSet aMiner = new AMinerDataSet();
         //AMinerDataSet.portAMinerDataToPRSData("D:\\AMiner-Author.txt.001", "filePaper_AMiner", "fileCoAuthor_AMiner", "D:\\PRS-Author.txt");
         aMiner.readFile_AMinerAuthor("D:\\AMiner-Author.txt.001");
-        aMiner.readFile_AMinerPaper("D:\\AMiner-Paper-Test.txt");
+        aMiner.readFile_AMinerPaper("D:\\AMiner-Paper.txt.001");
+        aMiner.readFile_AMinerCoAuthor("D:\\AMiner-Coauthor.txt.001");
+        
+        System.out.println(".....");
+        
     }
 }
